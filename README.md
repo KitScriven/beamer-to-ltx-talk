@@ -10,7 +10,7 @@ It works for my own admittedly basic purposes, so I hope it can at least serve a
 It handles the \secname and \subsecname commands with new \currentSection and \currentSubsection commands. 
 It also comments out theme commands, so if you want to use a theme you will need to do that manually.
 
-The syntax to run it is python beamer-to-ltxtalk-auto.py <oldfilepath>.tex -o <newfilepath>.tex.
+The syntax to run it is python beamer-to-ltxtalk-auto.py \<oldfilepath\>.tex -o \<newfilepath\>.tex.
 
-Regards,
+Regards,  
 Kit
