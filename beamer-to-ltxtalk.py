@@ -37,29 +37,6 @@ def parse_arguments():
     parser.add_argument("-o", "--output", help="Path to the output .tex file (optional)")
     return parser.parse_args()
 
-def transform_frames(text):
-    """
-    Transforms \begin{frame}{Title} -> \begin{frame} \frametitle{Title}
-    Uses multiline mode to handle cases where braces might be spaced out.
-    """
-    # Pattern looks for:
-    # \begin{frame}
-    # Optional [...]
-    # {Title}
-    pattern = re.compile(r'\\begin\{frame\}(?P<opts>\[.*?\])?\s*\{(?P<title>.*?)\}', re.DOTALL)
-    
-    def replacement(match):
-        opts = match.group('opts')
-        title = match.group('title')
-        
-        # Build the new string
-        if opts:
-            return f"\\begin{{frame}}{opts}\n\\frametitle{{{title}}}"
-        else:
-            return f"\\begin{{frame}}\n\\frametitle{{{title}}}"
-
-    return pattern.sub(replacement, text)
-
 def process_file(input_path, output_path):
     try:
         with open(input_path, 'r', encoding='utf-8') as f:
@@ -79,7 +56,10 @@ def process_file(input_path, output_path):
         if r'\documentclass{ltx-talk}' in content:
             content = content.replace(
                 r'\documentclass{ltx-talk}', 
-                '\\DocumentMetadata{tagging = on, lang = en}' + '\n' + r'\documentclass{ltx-talk}' + '\n' + AUTO_UPDATE_PREAMBLE
+                '\\DocumentMetadata{tagging = on, lang = en}' + '\n'
+                r'\tagpdfsetup{math/alt/use}' + '\n' +
+                r'\tagpdfsetup{table-header-rows=1}' + '\n' +
+                r'\documentclass[frame-title-arg]{ltx-talk}' + '\n' + AUTO_UPDATE_PREAMBLE
             )
         else:
             # Fallback if no documentclass found (e.g. partial file), prepend it
@@ -92,12 +72,12 @@ def process_file(input_path, output_path):
 		# 4. Theme Commenting 
 		# Comment out theme line
         content = content.replace(r'\usetheme', r'%\usetheme')
-        # 5. Replace Titlepage with Maketitle
-        content = content.replace(r'\titlepage', r'\maketitle')
-        # 6. Transform Frame Syntax
-        content = transform_frames(content)
+        # 5. Fix Titlepage with Maketitle
+        content = re.sub(r'\\begin\{frame\}\s*\\titlepage\s*\\end\{frame\}', 
+                         r'\\begin{frame}{}\n\\maketitle\n\\end{frame}', 
+                         content)
 
-        # 7. Write Output
+        # 6. Write Output
         target = output_path if output_path else input_path.replace('.tex', '_ltxtalk.tex')
         with open(target, 'w', encoding='utf-8') as f:
             f.write(content)
